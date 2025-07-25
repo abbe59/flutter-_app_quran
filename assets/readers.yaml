@@ -1,0 +1,25 @@
+readers:
+  - id: ar.husary
+    name: "محمود خليل الحصري"
+  - id: ar.sudais
+    name: "عبد الرحمن السديس"
+  - id: ar.minshawi
+    name: "محمد صديق المنشاوي"
+  - id: ar.abdulbasit
+    name: "عبد الباسط عبد الصمد"
+  - id: ar.maher
+    name: "ماهر المعيقلي"
+  - id: ar.saad
+    name: "سعد الغامدي"
+  - id: ar.shuraim
+    name: "سعود الشريم"
+  - id: ar.ajmi
+    name: "أحمد بن علي العجمي"
+  - id: ar.tablawi
+    name: "محمد محمود الطبلاوي"
+  - id: ar.ghamdi
+    name: "عبد الله الجهني"
+  - id: ar.basfar
+    name: "عبد الله بصفر"
+  - id: ar.rifai
+    name: "هاني الرفاعي"
