@@ -31,6 +31,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
+  flutter_bloc: ^9.1.1
   http: ^1.4.0
   just_audio: ^0.9.36
   shared_preferences: ^2.5.3
@@ -54,6 +55,7 @@ flutter:
   assets:
     - assets/images/
     - assets/quran_ayahs.json
+    - assets/quran_surahs.json
     - assets/readers.yaml
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
