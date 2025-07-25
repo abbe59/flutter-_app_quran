@@ -32,8 +32,10 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_staggered_animations: ^1.1.1
   http: ^1.4.0
   just_audio: ^0.9.36
+  quran_library: ^1.3.0
   shared_preferences: ^2.5.3
 
 dev_dependencies:

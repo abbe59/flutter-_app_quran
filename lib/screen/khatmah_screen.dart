@@ -80,12 +80,7 @@ class KhatmahScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.wb_sunny_rounded,
-                          color: Colors.white,
-                          size: 36,
-                        ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 35),
                         Expanded(
                           child: Text(
                             'دعاءالخاتمة',
@@ -99,18 +94,12 @@ class KhatmahScreen extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
-                            Icons.share_rounded,
-                            color: Colors.white,
-                            size: 28,
+                          icon: Icon(
+                            isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                            color: isDark ? Colors.amber : Colors.teal.shade700,
                           ),
                           onPressed: () {
-                            // azkarFuture.then((azkarList) {
-                            // if (azkarList.isNotEmpty) {
-                            //   // يمكنك استخدام مكتبة share_plus للمشاركة
-                            //   //  Share.share(azkarList[0]);
-                            // }
-                            // });
+                            context.read<ThemeBloc>().add(ToggleThemeEvent());
                           },
                         ),
                       ],
