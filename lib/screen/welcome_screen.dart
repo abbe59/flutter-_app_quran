@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quren_app_first/bloc/theme_bloc.dart';
+import 'package:quren_app_first/services/bookmark_manager.dart';
+import 'package:quren_app_first/screen/bookmarks_screen.dart';
+import 'package:quren_app_first/screen/surah_ayat_screen.dart';
+import 'package:quren_app_first/utils/surah_names.dart';
 
 class _QuickAzkarButton extends StatelessWidget {
   final String label;
@@ -65,6 +69,54 @@ class _QuickAzkarButton extends StatelessWidget {
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
+
+  // دالة للانتقال لآخر علامة مرجعية
+  void _goToLastBookmark(BuildContext context) async {
+    try {
+      final lastRead = await BookmarkManager.getLastReadPosition();
+
+      if (!context.mounted) return;
+
+      if (lastRead != null) {
+        // الانتقال لآخر موضع قراءة
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SurahAyatScreen(
+              surahNumber: lastRead['surahNumber'],
+              surahName: SurahNames.getSurahNameWithNumber(
+                lastRead['surahNumber'],
+              ),
+            ),
+          ),
+        );
+      } else {
+        // إذا لم توجد علامات، أظهر رسالة وانتقل لصفحة العلامات
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'لا توجد علامات محفوظة. ابدأ بقراءة القرآن لحفظ علامات!',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const BookmarksScreen()),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+
+      // في حالة الخطأ، اذهب لصفحة العلامات
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const BookmarksScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeBloc, ThemeState>(
@@ -211,6 +263,48 @@ class WelcomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // صف جديد لزر علامة القارئ
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: SizedBox(
+                              height: 80,
+                              child: _QuickAzkarButton(
+                                label: 'علامة القارئ',
+                                icon: Icons.bookmark,
+                                color: Colors.purple,
+                                onTap: () => _goToLastBookmark(context),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: SizedBox(
+                              height: 80,
+                              child: _QuickAzkarButton(
+                                label: 'جميع العلامات',
+                                icon: Icons.bookmarks,
+                                color: Colors.deepOrange,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const BookmarksScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          Expanded(flex: 1, child: Container()), // مساحة فارغة
                         ],
                       ),
                       const SizedBox(height: 24),
