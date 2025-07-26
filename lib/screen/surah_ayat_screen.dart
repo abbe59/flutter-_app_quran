@@ -5,6 +5,8 @@ import 'package:quren_app_first/model/ayah.dart';
 import 'package:quren_app_first/widget/gradient_scaffold.dart';
 import 'package:quren_app_first/widget/ayah_list_widget.dart';
 import 'package:quren_app_first/widget/reader_selector.dart';
+import 'package:quren_app_first/services/bookmark_manager.dart';
+import 'package:quren_app_first/screen/bookmarks_screen.dart';
 import 'dart:convert';
 
 class SurahAyatScreen extends StatefulWidget {
@@ -22,6 +24,42 @@ class SurahAyatScreen extends StatefulWidget {
 }
 
 class _SurahAyatScreenState extends State<SurahAyatScreen> {
+  // دالة لحفظ علامة مرجعية
+  Future<void> saveBookmark(int ayahNumber, String ayahText) async {
+    final bookmark = Bookmark(
+      surahNumber: widget.surahNumber,
+      surahName: widget.surahName,
+      ayahNumber: ayahNumber,
+      ayahText: ayahText,
+      createdAt: DateTime.now(),
+    );
+
+    final success = await BookmarkManager.saveBookmark(bookmark);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success ? 'تم حفظ العلامة بنجاح' : 'فشل في حفظ العلامة',
+          ),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+    }
+  }
+
+  // دالة للانتقال إلى صفحة العلامات المرجعية
+  void goToBookmarksScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const BookmarksScreen()),
+    );
+  }
+
+  // دالة لحفظ آخر موضع قراءة
+  Future<void> saveLastReadPosition(int ayahNumber) async {
+    await BookmarkManager.saveLastReadPosition(widget.surahNumber, ayahNumber);
+  }
+
   late Future<List<Ayah>> ayatFuture;
   String selectedReaderId = 'ar.alafasy';
   final AudioPlayer player = AudioPlayer();
@@ -110,13 +148,21 @@ class _SurahAyatScreenState extends State<SurahAyatScreen> {
       try {
         await player.setUrl(url);
         await player.play();
+
+        // حفظ آخر موضع قراءة تلقائياً
+        await saveLastReadPosition(ayahNumber);
       } catch (e) {
         debugPrint('فشل في تحميل: $url - $e');
         if (selectedReaderId != 'ar.alafasy') {
           // جرب العفاسي إذا فشل القارئ المختار
           try {
-            await player.setUrl('https://verses.quran.com/Alafasy/mp3/$surahStr$ayahStr.mp3');
+            await player.setUrl(
+              'https://verses.quran.com/Alafasy/mp3/$surahStr$ayahStr.mp3',
+            );
             await player.play();
+
+            // حفظ آخر موضع قراءة تلقائياً
+            await saveLastReadPosition(ayahNumber);
           } catch (e) {
             throw Exception('فشل في تحميل الصوت من جميع المصادر');
           }
@@ -290,6 +336,16 @@ class _SurahAyatScreenState extends State<SurahAyatScreen> {
               });
             },
           ),
+          // زر للانتقال إلى صفحة العلامة
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.bookmark),
+              label: const Text('علامتي في السورة'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+              onPressed: goToBookmarksScreen,
+            ),
+          ),
           Expanded(
             child: FutureBuilder<List<Ayah>>(
               future: ayatFuture,
@@ -315,6 +371,7 @@ class _SurahAyatScreenState extends State<SurahAyatScreen> {
                   onTextSelected: showReaderSelectionDialog,
                   selectedAyahIndex: selectedAyahIndex,
                   isPlaying: isPlaying,
+                  onBookmarkTap: saveBookmark,
                 );
               },
             ),

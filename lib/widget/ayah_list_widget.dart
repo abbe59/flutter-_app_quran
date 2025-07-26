@@ -10,6 +10,7 @@ class AyahListWidget extends StatelessWidget {
   final Function(String selectedText, int ayahNumber)? onTextSelected;
   final int? selectedAyahIndex;
   final bool isPlaying;
+  final Function(int ayahNumber, String ayahText)? onBookmarkTap;
 
   const AyahListWidget({
     super.key,
@@ -19,6 +20,7 @@ class AyahListWidget extends StatelessWidget {
     this.onTextSelected,
     this.selectedAyahIndex,
     this.isPlaying = false,
+    this.onBookmarkTap,
   });
 
   @override
@@ -333,8 +335,8 @@ class AyahListWidget extends StatelessWidget {
     );
   }
 
-  List<TextSpan> _buildAyatSpans(List<Ayah> ayatList, bool isDark) {
-    final List<TextSpan> spans = [];
+  List<InlineSpan> _buildAyatSpans(List<Ayah> ayatList, bool isDark) {
+    final List<InlineSpan> spans = [];
 
     for (int i = 0; i < ayatList.length; i++) {
       final ayah = ayatList[i];
@@ -404,6 +406,30 @@ class AyahListWidget extends StatelessWidget {
           ),
         ),
       );
+
+      // أيقونة العلامة المرجعية
+      if (onBookmarkTap != null) {
+        spans.add(
+          WidgetSpan(
+            child: GestureDetector(
+              onTap: () => onBookmarkTap!(ayah.numberInSurah, ayahText),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Icon(
+                  Icons.bookmark_border,
+                  size: fontSize * 0.6,
+                  color: Colors.amber.shade700,
+                ),
+              ),
+            ),
+          ),
+        );
+      }
 
       // مسافة بين الآيات (إلا في النهاية)
       if (i < ayatList.length - 1) {
