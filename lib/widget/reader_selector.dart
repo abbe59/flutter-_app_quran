@@ -6,6 +6,73 @@ import 'dart:convert';
 
 import '../model/reader.dart';
 
+// دالة مساعدة لإنشاء URLs للقراء
+class AudioUrlHelper {
+  static List<String> getAudioUrls(
+    String readerId,
+    int surahNumber,
+    int ayahNumber,
+  ) {
+    final surah = surahNumber.toString().padLeft(3, '0');
+    final ayahNum = ayahNumber.toString().padLeft(3, '0');
+
+    // تحديد مجلد القارئ
+    String readerFolder;
+    switch (readerId) {
+      case 'ar.alafasy':
+        readerFolder = 'Alafasy';
+        break;
+      case 'ar.abdurrahmaansudais':
+        readerFolder = 'Abdurrahmaan_As-Sudais';
+        break;
+      case 'ar.mahermuaiqly':
+        readerFolder = 'Maher_AlMuaiqly';
+        break;
+      case 'ar.saoodshuraym':
+        readerFolder = 'Saood_ash-Shuraym';
+        break;
+      case 'ar.abdulbasitmurattal':
+        readerFolder = 'Abdul_Basit_Murattal';
+        break;
+      case 'ar.hanirifai':
+        readerFolder = 'Hani_Rifai';
+        break;
+      case 'ar.shaatree':
+        readerFolder = 'Abu_Bakr_Ash-Shaatree';
+        break;
+      case 'ar.idrisabkar':
+        readerFolder = 'Idris_Abkar';
+        break;
+      case 'ar.sobhi':
+        readerFolder = 'Sobhi';
+        break;
+      default:
+        readerFolder = 'Alafasy';
+    }
+
+    // إرجاع قائمة URLs للتجربة
+    return [
+      'https://verses.quran.com/$readerFolder/mp3/$surah$ayahNum.mp3',
+      'https://cdn.islamic.network/quran/audio/128/$readerId/$ayahNumber.mp3',
+      'https://audio.qurancdn.com/$readerId/$ayahNumber.mp3',
+    ];
+  }
+
+  static List<Map<String, String>> getAllReaders() {
+    return [
+      {'id': 'ar.alafasy', 'name': 'مشاري العفاسي'},
+      {'id': 'ar.abdurrahmaansudais', 'name': 'عبد الرحمن السديس'},
+      {'id': 'ar.mahermuaiqly', 'name': 'ماهر المعيقلي'},
+      {'id': 'ar.saoodshuraym', 'name': 'سعود الشريم'},
+      {'id': 'ar.abdulbasitmurattal', 'name': 'عبد الباسط عبد الصمد'},
+      {'id': 'ar.hanirifai', 'name': 'هاني الرفاعي'},
+      {'id': 'ar.shaatree', 'name': 'أبو بكر الشاطري'},
+      {'id': 'ar.idrisabkar', 'name': 'إدريس أبكر'},
+      {'id': 'ar.sobhi', 'name': 'صبحي'},
+    ];
+  }
+}
+
 class ReaderSelector extends StatelessWidget {
   final String? selectedReaderId;
   final Function(String id, String name) onReaderSelected;
@@ -28,8 +95,31 @@ class ReaderSelector extends StatelessWidget {
         readers.add(Reader(id: id, name: name));
       }
     }
-    readers.insert(3, Reader(id: 'ar.alafasy', name: 'مشاري راشد العفاسي'));
-    return readers;
+    // إضافة القراء المشهورين مع القراء الجدد
+    final popularReaders = [
+      Reader(id: 'ar.alafasy', name: 'مشاري راشد العفاسي'),
+      Reader(id: 'ar.abdurrahmaansudais', name: 'عبد الرحمن السديس'),
+      Reader(id: 'ar.mahermuaiqly', name: 'ماهر المعيقلي'),
+      Reader(id: 'ar.saoodshuraym', name: 'سعود الشريم'),
+      Reader(id: 'ar.abdulbasitmurattal', name: 'عبد الباسط عبد الصمد'),
+      Reader(id: 'ar.hanirifai', name: 'هاني الرفاعي'),
+      Reader(id: 'ar.shaatree', name: 'أبو بكر الشاطري'),
+      Reader(id: 'ar.idrisabkar', name: 'إدريس أبكر'),
+      Reader(id: 'ar.sobhi', name: 'صبحي'),
+    ];
+
+    // دمج القراء المشهورين مع القراء من الملف
+    final allReaders = <Reader>[];
+    allReaders.addAll(popularReaders);
+
+    // إضافة القراء الآخرين من الملف (تجنب التكرار)
+    for (var reader in readers) {
+      if (!popularReaders.any((popular) => popular.id == reader.id)) {
+        allReaders.add(reader);
+      }
+    }
+
+    return allReaders;
   }
 
   @override

@@ -23,3 +23,9 @@ readers:
     name: "عبد الله بصفر"
   - id: ar.rifai
     name: "هاني الرفاعي"
+  - id: ar.shaatree
+    name: "أبو بكر الشاطري"
+  - id: ar.idrisabkar
+    name: "إدريس أبكر"
+  - id: ar.sobhi
+    name: "صبحي"

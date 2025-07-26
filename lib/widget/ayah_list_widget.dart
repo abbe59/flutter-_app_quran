@@ -7,72 +7,90 @@ class AyahListWidget extends StatelessWidget {
   final List<Ayah> ayat;
   final bool isDark;
   final double fontSize;
+  final Function(String selectedText, int ayahNumber)? onTextSelected;
+  final int? selectedAyahIndex;
+  final bool isPlaying;
 
   const AyahListWidget({
     super.key,
     required this.ayat,
     required this.isDark,
     this.fontSize = 22,
+    this.onTextSelected,
+    this.selectedAyahIndex,
+    this.isPlaying = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // فصل البسملة عن باقي الآيات
+    // عرض البسملة في العنوان وفصلها من بداية الآيات
     Ayah? basmalaAyah;
-    List<Ayah> mainAyat = ayat;
+    List<Ayah> mainAyat = [];
 
-    // البحث عن البسملة في الآية الأولى أو كآية منفصلة
-    if (ayat.isNotEmpty) {
-      final firstAyah = ayat.first;
+    // إنشاء البسملة للعنوان
+    basmalaAyah = Ayah(
+      text: 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+      numberInSurah: 0,
+    );
 
-      final basmalaText = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
-      final cleanText = firstAyah.text.trim();
+    // معالجة الآيات وإزالة البسملة من بدايتها
+    for (final ayah in ayat) {
+      final cleanText = ayah.text.trim();
 
-      // التحقق من وجود البسملة بطرق مختلفة
-      bool hasBasmala =
-          cleanText.contains(basmalaText) ||
-          cleanText.contains('بسم الله الرحمن الرحيم') ||
-          cleanText.startsWith('بِسْمِ') ||
-          cleanText.startsWith('بسم');
+      // قائمة بأشكال البسملة المختلفة
+      final basmalaVariations = [
+        'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+        'بِسْمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+        'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+        'بسم الله الرحمن الرحيم',
+      ];
 
-      if (hasBasmala) {
-        // إذا كانت الآية تحتوي على البسملة فقط
-        if (cleanText == basmalaText ||
-            cleanText == 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ' ||
-            cleanText.replaceAll(RegExp(r'[^\u0600-\u06FF\s]'), '').trim() ==
-                basmalaText) {
-          basmalaAyah = firstAyah;
-          mainAyat = ayat.length > 1 ? ayat.sublist(1) : [];
-        }
-        // إذا كانت الآية تحتوي على البسملة مع نص إضافي
-        else {
-          // إنشاء آية البسملة منفصلة
-          basmalaAyah = Ayah(text: basmalaText, numberInSurah: 0);
+      bool basmalaFound = false;
+      String remainingText = cleanText;
 
-          // إزالة البسملة من النص الأصلي
-          String remainingText = cleanText
-              .replaceFirst(basmalaText, '')
-              .replaceFirst('بسم الله الرحمن الرحيم', '')
-              .replaceFirst(
-                RegExp(r'بِسْمِ\s+اللَّهِ\s+الرَّحْمَٰنِ\s+الرَّحِيمِ'),
-                '',
-              )
-              .trim();
-
-          // تنظيف النص من المسافات الزائدة
-          remainingText = remainingText.replaceAll(RegExp(r'\s+'), ' ').trim();
-
-          if (remainingText.isNotEmpty) {
-            final modifiedFirstAyah = Ayah(
-              text: remainingText,
-              numberInSurah: firstAyah.numberInSurah,
-            );
-            mainAyat = [modifiedFirstAyah, ...ayat.sublist(1)];
-          } else {
-            mainAyat = ayat.length > 1 ? ayat.sublist(1) : [];
-          }
+      // البحث عن أي شكل من أشكال البسملة وإزالته
+      for (String basmala in basmalaVariations) {
+        if (cleanText.startsWith(basmala)) {
+          remainingText = cleanText.replaceFirst(basmala, '').trim();
+          basmalaFound = true;
+          break;
+        } else if (cleanText == basmala) {
+          // إذا كانت البسملة لوحدها، تخطيها
+          basmalaFound = true;
+          remainingText = '';
+          break;
         }
       }
+
+      if (basmalaFound) {
+        if (remainingText.isNotEmpty) {
+          mainAyat.add(
+            Ayah(text: remainingText, numberInSurah: ayah.numberInSurah),
+          );
+        }
+        // إذا كانت البسملة لوحدها، لا نضيف شيء
+      } else {
+        // آية عادية بدون بسملة
+        mainAyat.add(ayah);
+      }
+    }
+
+    // إذا لم توجد آيات، استخدم القائمة الأصلية
+    if (mainAyat.isEmpty && ayat.isNotEmpty) {
+      mainAyat = ayat;
+    }
+
+    // للسور التي لا تحتاج بسملة (سورة التوبة فقط)
+    bool isSuratTawbah = ayat.any(
+      (ayah) =>
+          ayah.text.contains('براءة') ||
+          ayah.text.contains('التوبة') ||
+          ayah.text.contains('قاتلوا الذين لا يؤمنون'),
+    );
+
+    // إذا كانت سورة التوبة، لا تعرض البسملة
+    if (isSuratTawbah) {
+      basmalaAyah = null;
     }
 
     return Container(
@@ -120,32 +138,11 @@ class AyahListWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // عرض البسملة كعنوان مميز ومنفصل
+                // عرض البسملة كعنوان مميز لكل السور (عدا التوبة)
                 if (basmalaAyah != null) ...[
-                  // مؤشر أن البسملة تم فصلها
-                  if (mainAyat.length != ayat.length)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'تم فصل البسملة',
-                            style: TextStyle(
-                              fontSize: fontSize * 0.7,
-                              color: Colors.green,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  // مؤشر أن البسملة تم فصلها من الآيات
+
+                  // عرض البسملة الفعلية
                   Container(
                     padding: const EdgeInsets.symmetric(
                       vertical: 12,
@@ -230,6 +227,37 @@ class AyahListWidget extends StatelessWidget {
                   ),
                 ],
 
+                // رسالة توضيحية للمستخدم
+                if (onTextSelected != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.touch_app, color: Colors.blue, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'اضغط على أي آية لاختيار القارئ وتشغيل الصوت',
+                            style: TextStyle(
+                              fontSize: fontSize * 0.7,
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // عرض الآيات بتدفق طبيعي مثل الكتاب
                 RichText(
                   textDirection: TextDirection.rtl,
@@ -311,30 +339,59 @@ class AyahListWidget extends StatelessWidget {
     for (int i = 0; i < ayatList.length; i++) {
       final ayah = ayatList[i];
 
-      // نص الآية
+      // عرض النص كما هو (البسملة تم معالجتها مسبقاً حسب نوع السورة)
+      final ayahText = ayah.text.trim();
+
+      // تخطي الآيات الفارغة أو القصيرة جداً
+      if (ayahText.isEmpty || ayahText.length < 2) {
+        continue;
+      }
+
+      // نص الآية مع إمكانية التحديد والتشغيل
+      final isCurrentlyPlaying =
+          selectedAyahIndex == ayah.numberInSurah && isPlaying;
+
       spans.add(
         TextSpan(
-          text: ayah.text,
+          text: ayahText,
           style: TextStyle(
-            color: isDark ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.w400,
+            color: isCurrentlyPlaying
+                ? (isDark ? Colors.teal.shade300 : Colors.teal.shade700)
+                : (isDark ? Colors.white : Colors.black87),
+            fontWeight: isCurrentlyPlaying ? FontWeight.w600 : FontWeight.w400,
+            backgroundColor: isCurrentlyPlaying
+                ? (isDark
+                      ? Colors.teal.withValues(alpha: 0.2)
+                      : Colors.teal.withValues(alpha: 0.1))
+                : null,
           ),
           recognizer: TapGestureRecognizer()
             ..onTap = () {
-              // نسخ النص عند الضغط
-              Clipboard.setData(ClipboardData(text: ayah.text));
+              // إظهار قائمة القراء عند الضغط على النص
+              if (onTextSelected != null) {
+                onTextSelected!(ayahText, ayah.numberInSurah);
+              } else {
+                // نسخ النص كبديل
+                Clipboard.setData(ClipboardData(text: ayahText));
+              }
             },
         ),
       );
 
-      // رقم الآية مع تصميم جميل
+      // رقم الآية مع تصميم جميل ومؤشر التشغيل
+      final ayahNumberText = isCurrentlyPlaying
+          ? ' ﴿${ayah.numberInSurah}﴾ 🔊 '
+          : ' ﴿${ayah.numberInSurah}﴾ ';
+
       spans.add(
         TextSpan(
-          text: ' ﴿${ayah.numberInSurah}﴾ ',
+          text: ayahNumberText,
           style: TextStyle(
             fontSize: fontSize * 0.55,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.teal.shade300 : Colors.teal.shade600,
+            color: isCurrentlyPlaying
+                ? (isDark ? Colors.orange.shade300 : Colors.orange.shade600)
+                : (isDark ? Colors.teal.shade300 : Colors.teal.shade600),
             shadows: [
               Shadow(
                 color: (isDark ? Colors.black : Colors.grey).withValues(
